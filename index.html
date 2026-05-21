@@ -81,9 +81,9 @@
   .status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
   .status-done    { background: var(--green-bg); color: var(--green); }
   .status-none    { background: var(--bg3); color: var(--text2); }
-  .status-live    { background: var(--green-bg); color: var(--green); }
-  .status-offline { background: var(--yellow-bg); color: var(--yellow); }
-  .status-no      { background: var(--red-bg); color: var(--red); }
+  .status-live       { background: var(--green-bg); color: var(--green); }
+  .status-unverified { background: var(--yellow-bg); color: var(--yellow); }
+  .status-no         { background: var(--red-bg); color: var(--red); }
 
   .version-tag { background: var(--blue-bg); color: var(--blue); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
   .version-dash { color: var(--text2); font-size: 12px; }
@@ -166,11 +166,11 @@
 <script>
 const PRODUCTS = [
   // Kappa / leadbit
-  { id:1,  name:"HondroFrost",       cat:"Kappa", src:"leadbit",     url:"https://bestlife4me.net/hd/kappa/hondrofrost/",         slug:"hondrofrost",       v1:true,  server:true,  live:true  },
-  { id:2,  name:"Pulsero Gel",       cat:"Kappa", src:"leadbit",     url:"https://bestlife4me.net/hd/kappa/pulsero-gel/",         slug:"pulsero-gel",       v1:true,  server:true,  live:true  },
+  { id:1,  name:"HondroFrost",       cat:"Kappa", src:"leadbit",     url:"https://bestlife4me.net/hd/kappa/hondrofrost/",         slug:"hondrofrost",       v1:true,  server:true,  live:false },
+  { id:2,  name:"Pulsero Gel",       cat:"Kappa", src:"leadbit",     url:"https://bestlife4me.net/hd/kappa/pulsero-gel/",         slug:"pulsero-gel",       v1:true,  server:true,  live:false },
   // Omega / nutriprofits
-  { id:3,  name:"Matcha Extreme",    cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/matcha-extreme/",      slug:"matcha-extreme",    v1:true,  server:true,  live:true  },
-  { id:4,  name:"Femin Plus",        cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/femin-plus/",          slug:"femin-plus",        v1:true,  server:true,  live:true  },
+  { id:3,  name:"Matcha Extreme",    cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/matcha-extreme/",      slug:"matcha-extreme",    v1:true,  server:true,  live:false },
+  { id:4,  name:"Femin Plus",        cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/femin-plus/",          slug:"femin-plus",        v1:true,  server:true,  live:false },
   { id:5,  name:"Folisin",           cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/folisin/",             slug:"folisin",           v1:false, server:false, live:false },
   { id:6,  name:"African Mango",     cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/african-mango/",       slug:"african-mango",     v1:false, server:false, live:false },
   { id:7,  name:"NuviaLab Flex",     cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/nuvialab-flex/",       slug:"nuvialab-flex",     v1:false, server:false, live:false },
@@ -208,7 +208,7 @@ const PRODUCTS = [
   { id:39, name:"Member XXL",        cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/member-xxl/",          slug:"member-xxl",        v1:false, server:false, live:false },
   { id:40, name:"Crave Burner",      cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/crave-burner/",        slug:"crave-burner",      v1:false, server:false, live:false },
   // Sigma / adcombo
-  { id:41, name:"Proctowell",        cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/proctowell/",          slug:"proctowell",        v1:true,  server:true,  live:true  },
+  { id:41, name:"Proctowell",        cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/proctowell/",          slug:"proctowell",        v1:true,  server:true,  live:false },
   { id:42, name:"Fungokiller",       cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/fungokiller/",         slug:"fungokiller",       v1:false, server:false, live:false },
   { id:43, name:"Fortuflex",         cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/fortuflex/",           slug:"fortuflex",         v1:false, server:false, live:false },
   { id:44, name:"DiaFlex Forte",     cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/diaflex-forte/",       slug:"diaflex-forte",     v1:false, server:false, live:false },
@@ -279,9 +279,10 @@ function statusChip(ok, labelOk, labelNo) {
     : `<span class="status status-none">— ${labelNo}</span>`;
 }
 
-function liveChip(live, url) {
-  if (!live) return `<span class="status status-no">✗ Brak</span>`;
-  return `<span class="status status-live">✓ Działa</span>`;
+function liveChip(live, hasServer) {
+  if (!hasServer) return `<span class="status status-no">✗ Brak pliku</span>`;
+  if (live)       return `<span class="status status-live">✓ Działa</span>`;
+  return `<span class="status status-unverified">? Nieweryfikowane</span>`;
 }
 
 function render(filter, search) {
@@ -312,7 +313,7 @@ function render(filter, search) {
         <td style="color:var(--text2);font-size:12px">${p.src}</td>
         <td>${p.v1 ? `<span class="status status-done">✓ v1.0</span>` : `<span class="status status-none">— Brak</span>`}</td>
         <td>${statusChip(p.server,'Na serwerze','Nie wgrano')}</td>
-        <td>${liveChip(p.live, lpUrl)}</td>
+        <td>${liveChip(p.live, p.server)}</td>
         <td>${p.v1 ? `<a class="lp-link" href="${lpUrl}" target="_blank">Otwórz ↗</a>` : '<span style="color:var(--text2);font-size:12px">—</span>'}</td>
       </tr>`;
   });
