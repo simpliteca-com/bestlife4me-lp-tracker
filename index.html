@@ -93,6 +93,8 @@
 
   .empty-row td { text-align: center; padding: 40px; color: var(--text2); font-size: 14px; }
 
+  @keyframes clp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
   @media (max-width: 768px) {
     .header, .stats, .filters, .table-wrap { padding-left: 16px; padding-right: 16px; }
     .header { flex-direction: column; align-items: flex-start; }
@@ -111,7 +113,13 @@
       <div class="header-sub">bestlife4me.net · Rynek PL · v1.0</div>
     </div>
   </div>
-  <div class="updated" id="updated-at">Aktualizacja: —</div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div class="updated" id="updated-at">Aktualizacja: —</div>
+    <button id="refresh-btn" onclick="refreshLiveStatus()" style="background:var(--blue-bg);border:1px solid var(--blue);color:var(--blue);padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:opacity .2s;">
+      <span id="refresh-icon">↻</span>
+      <span id="refresh-label">Odśwież dane</span>
+    </button>
+  </div>
 </div>
 
 <div class="stats">
@@ -326,6 +334,54 @@ function render(filter, search) {
   document.getElementById('stat-done').textContent = done;
   document.getElementById('stat-server').textContent = onServer;
   document.getElementById('stat-progress').textContent = visible > 0 ? Math.round(done/visible*100)+'%' : '0%';
+}
+
+// Live check
+async function checkUrl(url) {
+  try {
+    const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    const res = await fetch(proxy, { signal: AbortSignal.timeout(12000) });
+    const json = await res.json();
+    const html = json.contents || '';
+    const hits = (html.match(/clp-hero|simpli-checkout-form/g) || []).length;
+    return hits >= 2 ? 'live' : hits === 1 ? 'partial' : 'dead';
+  } catch(e) {
+    return 'error';
+  }
+}
+
+async function refreshLiveStatus() {
+  const btn = document.getElementById('refresh-btn');
+  const icon = document.getElementById('refresh-icon');
+  const label = document.getElementById('refresh-label');
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  icon.style.display = 'inline-block';
+  icon.style.animation = 'clp-spin 1s linear infinite';
+
+  const toCheck = PRODUCTS.filter(p => p.server);
+  let done = 0;
+  label.textContent = `Sprawdzam 0/${toCheck.length}…`;
+
+  await Promise.all(toCheck.map(async (p) => {
+    const result = await checkUrl(p.url);
+    if (result === 'live')    p.live = true;
+    else if (result === 'dead' || result === 'partial') p.live = false;
+    // 'error' — leave as-is
+    done++;
+    label.textContent = `Sprawdzam ${done}/${toCheck.length}…`;
+  }));
+
+  const now = new Date();
+  const ts = now.toLocaleDateString('pl-PL') + ' ' + now.toLocaleTimeString('pl-PL', {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('updated-at').textContent = 'Sprawdzono: ' + ts;
+
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  icon.style.animation = '';
+  label.textContent = 'Odśwież dane';
+
+  render(activeFilter, document.getElementById('search').value);
 }
 
 // Init
