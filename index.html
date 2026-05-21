@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BestLife4Me — LP Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D1117;
+    --bg2: #161B22;
+    --bg3: #21262D;
+    --border: #30363D;
+    --text: #E6EDF3;
+    --text2: #8B949E;
+    --green: #3FB950;
+    --green-bg: rgba(63,185,80,.12);
+    --yellow: #D29922;
+    --yellow-bg: rgba(210,153,34,.12);
+    --red: #F85149;
+    --red-bg: rgba(248,81,73,.12);
+    --blue: #58A6FF;
+    --blue-bg: rgba(88,166,255,.12);
+    --purple: #BC8CFF;
+    --purple-bg: rgba(188,140,255,.12);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .header-title { display: flex; align-items: center; gap: 12px; }
+  .header-logo { width: 32px; height: 32px; background: linear-gradient(135deg,#00B4D8,#2DD4BF); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .header h1 { font-size: 18px; font-weight: 700; color: var(--text); }
+  .header-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .updated { font-size: 12px; color: var(--text2); }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; padding: 24px 32px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+  .stat-value { font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.yellow .stat-value { color: var(--yellow); }
+  .stat-card.blue .stat-value { color: var(--blue); }
+  .stat-card.default .stat-value { color: var(--text); }
+
+  /* FILTERS */
+  .filters { padding: 0 32px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .filter-btn { background: var(--bg2); border: 1px solid var(--border); color: var(--text2); padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all .15s; font-family: inherit; }
+  .filter-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .filter-btn.active { background: var(--blue-bg); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .search-wrap { margin-left: auto; position: relative; }
+  .search-wrap input { background: var(--bg2); border: 1px solid var(--border); color: var(--text); padding: 6px 12px 6px 32px; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; width: 200px; transition: border-color .15s; }
+  .search-wrap input:focus { border-color: var(--blue); }
+  .search-wrap::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; pointer-events: none; }
+
+  /* TABLE */
+  .table-wrap { padding: 0 32px 32px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: var(--bg2); border: 1px solid var(--border); padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:hover { background: var(--bg2); }
+  tbody tr.hidden { display: none; }
+  td { padding: 10px 14px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); vertical-align: middle; }
+  td:first-child { border-left: 1px solid var(--border); }
+
+  .product-name { font-weight: 600; color: var(--text); }
+  .product-url { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .product-url a { color: var(--blue); text-decoration: none; }
+  .product-url a:hover { text-decoration: underline; }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .badge-kappa   { background: rgba(88,166,255,.15); color: #58A6FF; }
+  .badge-omega   { background: rgba(63,185,80,.15); color: #3FB950; }
+  .badge-sigma   { background: rgba(188,140,255,.15); color: #BC8CFF; }
+  .badge-zeta    { background: rgba(255,123,63,.15); color: #FF7B3F; }
+
+  /* STATUS CHIPS */
+  .status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+  .status-done    { background: var(--green-bg); color: var(--green); }
+  .status-none    { background: var(--bg3); color: var(--text2); }
+  .status-live    { background: var(--green-bg); color: var(--green); }
+  .status-offline { background: var(--yellow-bg); color: var(--yellow); }
+  .status-no      { background: var(--red-bg); color: var(--red); }
+
+  .version-tag { background: var(--blue-bg); color: var(--blue); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .version-dash { color: var(--text2); font-size: 12px; }
+
+  .lp-link { color: var(--blue); text-decoration: none; font-size: 12px; }
+  .lp-link:hover { text-decoration: underline; }
+
+  .empty-row td { text-align: center; padding: 40px; color: var(--text2); font-size: 14px; }
+
+  @media (max-width: 768px) {
+    .header, .stats, .filters, .table-wrap { padding-left: 16px; padding-right: 16px; }
+    .header { flex-direction: column; align-items: flex-start; }
+    .search-wrap { margin-left: 0; }
+    .search-wrap input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">
+    <div class="header-logo">🚀</div>
+    <div>
+      <h1>BestLife4Me — LP Tracker</h1>
+      <div class="header-sub">bestlife4me.net · Rynek PL · v1.0</div>
+    </div>
+  </div>
+  <div class="updated" id="updated-at">Aktualizacja: —</div>
+</div>
+
+<div class="stats">
+  <div class="stat-card default">
+    <div class="stat-value" id="stat-total">0</div>
+    <div class="stat-label">Wszystkich produktów</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-value" id="stat-done">0</div>
+    <div class="stat-label">Ma landing v1.0</div>
+  </div>
+  <div class="stat-card yellow">
+    <div class="stat-value" id="stat-server">0</div>
+    <div class="stat-label">Na serwerze</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-value" id="stat-progress">0</div>
+    <div class="stat-label">% ukończenia</div>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" data-filter="all">Wszystkie</button>
+  <button class="filter-btn" data-filter="Kappa">Kappa · leadbit</button>
+  <button class="filter-btn" data-filter="Omega">Omega · nutriprofits</button>
+  <button class="filter-btn" data-filter="Sigma">Sigma · adcombo</button>
+  <button class="filter-btn" data-filter="Zeta">Zeta · terraleads</button>
+  <div class="search-wrap">
+    <input type="text" id="search" placeholder="Szukaj produktu...">
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table id="product-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Produkt</th>
+        <th>Kategoria</th>
+        <th>Source</th>
+        <th>Landing v1.0</th>
+        <th>Na serwerze</th>
+        <th>Wyświetla się</th>
+        <th>Link LP</th>
+      </tr>
+    </thead>
+    <tbody id="table-body">
+    </tbody>
+  </table>
+</div>
+
+<script>
+const PRODUCTS = [
+  // Kappa / leadbit
+  { id:1,  name:"HondroFrost",       cat:"Kappa", src:"leadbit",     url:"https://bestlife4me.net/hd/kappa/hondrofrost/",         slug:"hondrofrost",       v1:true,  server:true,  live:true  },
+  { id:2,  name:"Pulsero Gel",       cat:"Kappa", src:"leadbit",     url:"https://bestlife4me.net/hd/kappa/pulsero-gel/",         slug:"pulsero-gel",       v1:true,  server:true,  live:true  },
+  // Omega / nutriprofits
+  { id:3,  name:"Matcha Extreme",    cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/matcha-extreme/",      slug:"matcha-extreme",    v1:true,  server:true,  live:true  },
+  { id:4,  name:"Femin Plus",        cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/femin-plus/",          slug:"femin-plus",        v1:true,  server:true,  live:true  },
+  { id:5,  name:"Folisin",           cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/folisin/",             slug:"folisin",           v1:false, server:false, live:false },
+  { id:6,  name:"African Mango",     cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/african-mango/",       slug:"african-mango",     v1:false, server:false, live:false },
+  { id:7,  name:"NuviaLab Flex",     cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/nuvialab-flex/",       slug:"nuvialab-flex",     v1:false, server:false, live:false },
+  { id:8,  name:"Snoran Plus",       cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/snoran-plus/",         slug:"snoran-plus",       v1:false, server:false, live:false },
+  { id:9,  name:"NuviaLab Relax",    cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/nuvialab-relax/",      slug:"nuvialab-relax",    v1:false, server:false, live:false },
+  { id:10, name:"Bulk Extreme",      cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/bulk-extreme/",        slug:"bulk-extreme",      v1:false, server:false, live:false },
+  { id:11, name:"Keto Actives",      cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/keto-actives/",        slug:"keto-actives",      v1:false, server:false, live:false },
+  { id:12, name:"Moringa Actives",   cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/moringa-actives/",     slug:"moringa-actives",   v1:false, server:false, live:false },
+  { id:13, name:"Night Mega Burner", cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/night-mega-burner/",   slug:"night-mega-burner", v1:false, server:false, live:false },
+  { id:14, name:"Semaxin",           cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/semaxin/",             slug:"semaxin",           v1:false, server:false, live:false },
+  { id:15, name:"Expansil Cream",    cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/expansil-cream/",      slug:"expansil-cream",    v1:false, server:false, live:false },
+  { id:16, name:"NuviaLab Vitality", cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/nuvialab-vitality/",   slug:"nuvialab-vitality", v1:false, server:false, live:false },
+  { id:17, name:"Eyevita Plus",      cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/eyevita-plus/",        slug:"eyevita-plus",      v1:false, server:false, live:false },
+  { id:18, name:"Silvets",           cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/silvets/",             slug:"silvets",           v1:false, server:false, live:false },
+  { id:19, name:"Green Barley Plus", cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/green-barley-plus/",   slug:"green-barley-plus", v1:false, server:false, live:false },
+  { id:20, name:"NuviaLab Sugar Control", cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/nuvialab-sugar-control/", slug:"nuvialab-sugar-control", v1:false, server:false, live:false },
+  { id:21, name:"Cappuccino MCT",    cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/cappuccino-mct/",      slug:"cappuccino-mct",    v1:false, server:false, live:false },
+  { id:22, name:"Locerin",           cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/locerin/",             slug:"locerin",           v1:false, server:false, live:false },
+  { id:23, name:"Piperinox",         cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/piperinox/",           slug:"piperinox",         v1:false, server:false, live:false },
+  { id:24, name:"Profolan",          cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/profolan/",            slug:"profolan",          v1:false, server:false, live:false },
+  { id:25, name:"Erisil Plus",       cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/erisil-plus/",         slug:"erisil-plus",       v1:false, server:false, live:false },
+  { id:26, name:"Restilen",          cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/restilen/",            slug:"restilen",          v1:false, server:false, live:false },
+  { id:27, name:"Zinamax",           cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/zinamax/",             slug:"zinamax",           v1:false, server:false, live:false },
+  { id:28, name:"Testolan",          cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/testolan/",            slug:"testolan",          v1:false, server:false, live:false },
+  { id:29, name:"ProFlexen",         cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/proflexen/",           slug:"proflexen",         v1:false, server:false, live:false },
+  { id:30, name:"Fat Burn Active",   cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/fat-burn-active/",     slug:"fat-burn-active",   v1:false, server:false, live:false },
+  { id:31, name:"Dentolan",          cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/dentolan/",            slug:"dentolan",          v1:false, server:false, live:false },
+  { id:32, name:"Eron Plus",         cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/eron-plus/",           slug:"eron-plus",         v1:false, server:false, live:false },
+  { id:33, name:"Nonacne",           cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/nonacne/",             slug:"nonacne",           v1:false, server:false, live:false },
+  { id:34, name:"GigantX",           cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/gigantx/",             slug:"gigantx",           v1:false, server:false, live:false },
+  { id:35, name:"Flexomore",         cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/flexomore/",           slug:"flexomore",         v1:false, server:false, live:false },
+  { id:36, name:"EnduNAD",           cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/endunad/",             slug:"endunad",           v1:false, server:false, live:false },
+  { id:37, name:"Collagen Select",   cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/collagen-select/",     slug:"collagen-select",   v1:false, server:false, live:false },
+  { id:38, name:"NuProstate",        cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/nuprostate/",          slug:"nuprostate",        v1:false, server:false, live:false },
+  { id:39, name:"Member XXL",        cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/member-xxl/",          slug:"member-xxl",        v1:false, server:false, live:false },
+  { id:40, name:"Crave Burner",      cat:"Omega", src:"nutriprofits",url:"https://bestlife4me.net/hd/omega/crave-burner/",        slug:"crave-burner",      v1:false, server:false, live:false },
+  // Sigma / adcombo
+  { id:41, name:"Proctowell",        cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/proctowell/",          slug:"proctowell",        v1:true,  server:true,  live:true  },
+  { id:42, name:"Fungokiller",       cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/fungokiller/",         slug:"fungokiller",       v1:false, server:false, live:false },
+  { id:43, name:"Fortuflex",         cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/fortuflex/",           slug:"fortuflex",         v1:false, server:false, live:false },
+  { id:44, name:"DiaFlex Forte",     cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/diaflex-forte/",       slug:"diaflex-forte",     v1:false, server:false, live:false },
+  { id:45, name:"Cardiotensive",     cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/cardiotensive/",       slug:"cardiotensive",     v1:false, server:false, live:false },
+  { id:46, name:"Hondro Sol",        cat:"Sigma", src:"adcombo",     url:"https://bestlife4me.net/hd/sigma/hondro-sol/",          slug:"hondro-sol",        v1:false, server:false, live:false },
+  // Zeta / terraleads
+  { id:47, name:"Insunorm",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/insunorm-c/",                                         slug:"insunorm",          v1:false, server:false, live:false },
+  { id:48, name:"Kolagen HelpVit",   cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/kolagen-health-cpa-cod-nutra/",                       slug:"kolagen-helpvit",   v1:false, server:false, live:false },
+  { id:49, name:"Hair & Nails HelpVit",cat:"Zeta",src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/hair-and-nails-beauty-cpa-cod-nutra/",                slug:"hair-nails",        v1:false, server:false, live:false },
+  { id:50, name:"Visovo",            cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/visovo-c/",                                           slug:"visovo",            v1:false, server:false, live:false },
+  { id:51, name:"Gluconax",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/gluconax-premium-c-health-cpa-cod-nutra/",            slug:"gluconax",          v1:false, server:false, live:false },
+  { id:52, name:"Cardio A",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/cardio-a/",                                           slug:"cardio-a",          v1:false, server:false, live:false },
+  { id:53, name:"VitaSlim",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/vitaslim-137zl-diet-weightloss-cpa-cod-nutra/",       slug:"vitaslim",          v1:false, server:false, live:false },
+  { id:54, name:"Sonixine",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/sonixine-c/",                                         slug:"sonixine",          v1:false, server:false, live:false },
+  { id:55, name:"Eroboost",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/eroboost-premium-с-adult-cod-cpa-nutra/",             slug:"eroboost",          v1:false, server:false, live:false },
+  { id:56, name:"Urocore",           cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/urocore-health-cpa-cod-nutra/",                       slug:"urocore",           v1:false, server:false, live:false },
+  { id:57, name:"HondroDin",         cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/hondrodin-health-cpa-cod-nutra/",                     slug:"hondrodin",         v1:false, server:false, live:false },
+  { id:58, name:"Cardio Nova",       cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/cardio-nova-health-cpa-cod-nutra/",                   slug:"cardio-nova",       v1:false, server:false, live:false },
+  { id:59, name:"Flebrix",           cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/flebrix-varicose-veins-cpa-cod-nutra/",               slug:"flebrix",           v1:false, server:false, live:false },
+  { id:60, name:"ErektoMax",         cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/erektomax-potency-cpa-cod-nutra/",                    slug:"erektomax",         v1:false, server:false, live:false },
+  { id:61, name:"UroVital",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/urovital-cystitis-cpa-cod-nutra/",                    slug:"urovital",          v1:false, server:false, live:false },
+  { id:62, name:"Slimline",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/slimline-diet-weightloss-cpa-cod-nutra/",             slug:"slimline",          v1:false, server:false, live:false },
+  { id:63, name:"Urosilan",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/urosilan-prostatitis-cpa-cod-nutra/",                 slug:"urosilan",          v1:false, server:false, live:false },
+  { id:64, name:"MensiMax",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/mensimax-enlargement-cpa-cod-nutra/",                 slug:"mensimax",          v1:false, server:false, live:false },
+  { id:65, name:"ForceFlex",         cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/forceflex-joints-cpa-cod-nutra/",                     slug:"forceflex",         v1:false, server:false, live:false },
+  { id:66, name:"Gliterin Forte",    cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/gliterin-forte-diabetes-cpa-cod-nutra/",              slug:"gliterin-forte",    v1:false, server:false, live:false },
+  { id:67, name:"Cardionil",         cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/cardionil-hypertension-cpa-cod-nutra/",               slug:"cardionil",         v1:false, server:false, live:false },
+  { id:68, name:"MatchaFitty",       cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/matchafitty-diet-weightloss-cpa-cod-nutra/",          slug:"matchafitty",       v1:false, server:false, live:false },
+  { id:69, name:"Eelhoe Hair Oil",   cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/eelhoe-hair-oil-beauty-cpa-cod-nutra/",               slug:"eelhoe-hair-oil",   v1:false, server:false, live:false },
+  { id:70, name:"Dermonte",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/dermonte-hairloss-cpa-cod-nutra/",                    slug:"dermonte",          v1:false, server:false, live:false },
+  { id:71, name:"Nutrilaben",        cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/nutrilaben-diet-weightloss-cpa-cod-nutra/",           slug:"nutrilaben",        v1:false, server:false, live:false },
+  { id:72, name:"FizzBurn",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/fizzburn-weightloss-cpa-cod-nutra/",                  slug:"fizzburn",          v1:false, server:false, live:false },
+  { id:73, name:"Max Vibe",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/max-vibe-adult-cpa-cod-nutra/",                       slug:"max-vibe",          v1:false, server:false, live:false },
+  { id:74, name:"Viagor Power",      cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/viagor-power-adult-cpa-cod-nutra/",                   slug:"viagor-power",      v1:false, server:false, live:false },
+  { id:75, name:"Armour Spray",      cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/armour-spray-fungus-cpa-cod-nutra/",                  slug:"armour-spray",      v1:false, server:false, live:false },
+  { id:76, name:"VeraFit",           cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/verafit-diet-weightloss-cpa-cod-nutra/",              slug:"verafit",           v1:false, server:false, live:false },
+  { id:77, name:"Germivir",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/germivir-health-cpa-cod-nutra/",                      slug:"germivir",          v1:false, server:false, live:false },
+  { id:78, name:"ProctoHem",         cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/proctohem-hemorrhoids-cpa-cod-nutra/",                slug:"proctohem",         v1:false, server:false, live:false },
+  { id:79, name:"Varicone",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/varicone-premium/",                                   slug:"varicone",          v1:false, server:false, live:false },
+  { id:80, name:"Cystenon",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/cystenon-premium/",                                   slug:"cystenon",          v1:false, server:false, live:false },
+  { id:81, name:"Osteflex",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/osteflex-health-cpa-cod-nutra/",                      slug:"osteflex",          v1:false, server:false, live:false },
+  { id:82, name:"Germivir 120g",     cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/germivir-120g-health-cpa-cod-nutra/",                 slug:"germivir-120g",     v1:false, server:false, live:false },
+  { id:83, name:"Visitec",           cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/visitec-premium/",                                    slug:"visitec",           v1:false, server:false, live:false },
+  { id:84, name:"Vitasimil",         cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/vitasimil-weightloss-cpa-cod-nutra/",                 slug:"vitasimil",         v1:false, server:false, live:false },
+  { id:85, name:"Keto Probiotix",    cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/keto-probiotix-diet-weightloss-cpa-cod-nutra/",       slug:"keto-probiotix",    v1:false, server:false, live:false },
+  { id:86, name:"Sanuslim",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/sanuslim-diet-weightloss-cpa-cod-nutra/",             slug:"sanuslim",          v1:false, server:false, live:false },
+  { id:87, name:"Prostavin Plus",    cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/prostavin-plus-joints-cpa-cod-nutra/",                slug:"prostavin-plus",    v1:false, server:false, live:false },
+  { id:88, name:"Desparazil",        cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/desparazil-vermin-cpa-cod-nutra/",                    slug:"desparazil",        v1:false, server:false, live:false },
+  { id:89, name:"Vigordic",          cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/vigordic-potency-cpa-cod-nutra/",                     slug:"vigordic",          v1:false, server:false, live:false },
+  { id:90, name:"Cardiominal",       cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/cardiominal-hypertension-cpa-cod-nutra/",             slug:"cardiominal",       v1:false, server:false, live:false },
+  { id:91, name:"Diabetins Max",     cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/diabetins-max-health-cpa-cod-nutra/",                 slug:"diabetins-max",     v1:false, server:false, live:false },
+  { id:92, name:"Metonil",           cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/metonil-joints-cpa-cod-nutra/",                       slug:"metonil",           v1:false, server:false, live:false },
+  { id:93, name:"Urinol Pro",        cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/urinol-pro-health-cpa-cod-nutra/",                    slug:"urinol-pro",        v1:false, server:false, live:false },
+  { id:94, name:"Prostonel",         cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/prostonel-health-cpa-cod-nutra/",                     slug:"prostonel",         v1:false, server:false, live:false },
+  { id:95, name:"Ketomorin",         cat:"Zeta",  src:"terraleads",  url:"https://bestlife4me.net/hd/zeta/ketomorin-weightloss-cpa-cod-nutra/",                 slug:"ketomorin",         v1:false, server:false, live:false },
+];
+
+const UPDATED = "2025-05-21";
+
+function catBadge(cat) {
+  const map = { Kappa:'badge-kappa', Omega:'badge-omega', Sigma:'badge-sigma', Zeta:'badge-zeta' };
+  return `<span class="badge ${map[cat]||''}">${cat}</span>`;
+}
+
+function statusChip(ok, labelOk, labelNo) {
+  return ok
+    ? `<span class="status status-done">✓ ${labelOk}</span>`
+    : `<span class="status status-none">— ${labelNo}</span>`;
+}
+
+function liveChip(live, url) {
+  if (!live) return `<span class="status status-no">✗ Brak</span>`;
+  return `<span class="status status-live">✓ Działa</span>`;
+}
+
+function render(filter, search) {
+  const tbody = document.getElementById('table-body');
+  const q = (search||'').toLowerCase();
+  let visible = 0, done = 0, onServer = 0;
+
+  tbody.innerHTML = '';
+  PRODUCTS.forEach(p => {
+    const matchCat = filter === 'all' || p.cat === filter;
+    const matchSearch = !q || p.name.toLowerCase().includes(q) || p.src.toLowerCase().includes(q);
+    if (!matchCat || !matchSearch) return;
+
+    visible++;
+    if (p.v1) done++;
+    if (p.server) onServer++;
+
+    const lpUrl = `https://bestlife4me.net/hd/${p.cat.toLowerCase()}/${p.slug}/`;
+
+    tbody.innerHTML += `
+      <tr>
+        <td style="color:var(--text2);font-size:12px">${p.id}</td>
+        <td>
+          <div class="product-name">${p.name}</div>
+          <div class="product-url"><a href="${p.url}" target="_blank">↗ ${p.url.replace('https://bestlife4me.net','')}</a></div>
+        </td>
+        <td>${catBadge(p.cat)}</td>
+        <td style="color:var(--text2);font-size:12px">${p.src}</td>
+        <td>${p.v1 ? `<span class="status status-done">✓ v1.0</span>` : `<span class="status status-none">— Brak</span>`}</td>
+        <td>${statusChip(p.server,'Na serwerze','Nie wgrano')}</td>
+        <td>${liveChip(p.live, lpUrl)}</td>
+        <td>${p.v1 ? `<a class="lp-link" href="${lpUrl}" target="_blank">Otwórz ↗</a>` : '<span style="color:var(--text2);font-size:12px">—</span>'}</td>
+      </tr>`;
+  });
+
+  if (visible === 0) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Brak produktów spełniających kryteria</td></tr>`;
+  }
+
+  document.getElementById('stat-total').textContent = visible;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-server').textContent = onServer;
+  document.getElementById('stat-progress').textContent = visible > 0 ? Math.round(done/visible*100)+'%' : '0%';
+}
+
+// Init
+document.getElementById('updated-at').textContent = 'Aktualizacja: ' + UPDATED;
+
+let activeFilter = 'all';
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    render(activeFilter, document.getElementById('search').value);
+  });
+});
+
+document.getElementById('search').addEventListener('input', e => {
+  render(activeFilter, e.target.value);
+});
+
+render('all', '');
+</script>
+</body>
+</html>
